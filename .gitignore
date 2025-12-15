@@ -75,3 +75,4 @@ Thumbs.db
 android/key.properties
 android/app/*.keystore
 *.keystore
+android/app/google-services.json
