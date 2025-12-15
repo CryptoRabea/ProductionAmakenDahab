@@ -123,8 +123,10 @@ class DatabaseService {
     if (!localStorage.getItem('settings')) {
       setItem('settings', INITIAL_SETTINGS);
     }
-    // Ensure an admin user exists for testing
+    // Ensure admin users exist for testing
     const users = getItem<User[]>('users', []);
+
+    // Admin 1
     if (!users.find(u => u.email === 'admin@dahab.com')) {
         const admin: User = {
             id: 'admin1',
@@ -134,8 +136,21 @@ class DatabaseService {
             savedEventIds: []
         };
         users.push(admin);
-        setItem('users', users);
     }
+
+    // Admin 2 (Add your second admin here)
+    if (!users.find(u => u.email === 'youssefrabea3@gmail.com')) {
+        const admin2: User = {
+            id: 'admin2',
+            name: 'Youssef Rabea',
+            email: 'youssefrabea3@gmail.com',
+            role: UserRole.ADMIN,
+            savedEventIds: []
+        };
+        users.push(admin2);
+    }
+
+    setItem('users', users);
   }
 
   // --- AUTHENTICATION ---

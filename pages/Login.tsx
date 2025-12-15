@@ -1,8 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { User, UserRole } from '../types';
-import { db } from '../services/database';
-import { Mail, Lock, User as UserIcon, ArrowRight, Check, Facebook, Loader2, Briefcase, AlertCircle } from 'lucide-react';
+import {
+  loginWithEmail,
+  registerWithEmail,
+  loginWithGoogle,
+  loginWithFacebook,
+  validatePassword,
+  resendVerificationEmail
+} from '../services/auth';
+import { Mail, Lock, User as UserIcon, ArrowRight, Check, Facebook, Loader2, Briefcase, AlertCircle, CheckCircle, ShieldCheck } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
 
 interface LoginProps {
@@ -17,7 +24,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [mode, setMode] = useState<AuthMode>('login');
   const [loading, setLoading] = useState(false);
   const { settings } = useSettings();
-  
+
   // Form State
   const [formData, setFormData] = useState({
     name: '',
@@ -26,6 +33,9 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   });
   const [isProviderSignup, setIsProviderSignup] = useState(false);
   const [error, setError] = useState('');
+  const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
+  const [showVerificationMessage, setShowVerificationMessage] = useState(false);
+  const [needsVerification, setNeedsVerification] = useState(false);
 
   useEffect(() => {
     const roleParam = searchParams.get('role');
@@ -43,15 +53,20 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const handleSocialLogin = async (provider: 'google' | 'facebook') => {
     setLoading(true);
     setError('');
+    setShowVerificationMessage(false);
     try {
-      const user = await db.socialLogin(provider);
+      const user = provider === 'google'
+        ? await loginWithGoogle()
+        : await loginWithFacebook();
+
       onLogin(user);
+
       if (user.role === UserRole.ADMIN) navigate('/admin');
       else if (user.role === UserRole.PROVIDER) navigate('/provider-dashboard');
       else navigate('/');
-    } catch (e: unknown) {
-      console.error(e);
-      setError(e.message || 'Social authentication failed.');
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || 'Social authentication failed.');
     } finally {
       setLoading(false);
     }
@@ -60,7 +75,9 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    
+    setShowVerificationMessage(false);
+    setNeedsVerification(false);
+
     if (!formData.email || !formData.password) {
       setError('Please fill in all fields');
       return;
@@ -69,40 +86,85 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setLoading(true);
 
     try {
-      let user: User;
-
       if (mode === 'signup') {
+        // Signup mode
         if (!formData.name) {
           setError('Name is required for signup');
           setLoading(false);
           return;
         }
-        user = await db.register(formData.name, formData.email, formData.password, isProviderSignup);
+
+        // Validate password before submitting
+        const validation = validatePassword(formData.password);
+        if (!validation.valid) {
+          setError(validation.errors[0]); // Show first error
+          setPasswordErrors(validation.errors);
+          setLoading(false);
+          return;
+        }
+
+        const result = await registerWithEmail(
+          formData.name,
+          formData.email,
+          formData.password,
+          isProviderSignup
+        );
+
+        // Show verification message
+        setShowVerificationMessage(true);
+        setFormData({ name: '', email: '', password: '' });
+        setMode('login');
+
+        // Don't login yet - user needs to verify email
       } else {
-        user = await db.login(formData.email, formData.password);
+        // Login mode
+        const user = await loginWithEmail(formData.email, formData.password);
+
+        onLogin(user);
+
+        // Routing based on Role
+        if (user.role === UserRole.ADMIN) navigate('/admin');
+        else if (user.role === UserRole.PROVIDER) navigate('/provider-dashboard');
+        else navigate('/');
       }
-
-      onLogin(user);
-      
-      // Routing based on Role
-      if (user.role === UserRole.ADMIN) navigate('/admin');
-      else if (user.role === UserRole.PROVIDER) navigate('/provider-dashboard');
-      else navigate('/');
-
-    } catch (err: unknown) {
+    } catch (err: any) {
       console.error("Auth Error", err);
-      // Friendly error messages
-      if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
-        setError('Invalid email or password.');
-      } else if (err.code === 'auth/email-already-in-use') {
-        setError('This email is already registered.');
-      } else if (err.code === 'auth/weak-password') {
-        setError('Password should be at least 6 characters.');
+
+      // Check if it's an email verification error
+      if (err.message?.includes('verify your email')) {
+        setNeedsVerification(true);
+        setError(err.message);
       } else {
-        setError(err.message || 'Authentication failed. Please check your configuration.');
+        setError(err.message || 'Authentication failed. Please try again.');
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      await resendVerificationEmail();
+      setShowVerificationMessage(true);
+      setNeedsVerification(false);
+    } catch (err: any) {
+      setError(err.message || 'Failed to resend verification email');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Validate password in real-time during signup
+  const handlePasswordChange = (password: string) => {
+    setFormData({ ...formData, password });
+
+    if (mode === 'signup' && password.length > 0) {
+      const validation = validatePassword(password);
+      setPasswordErrors(validation.errors);
+    } else {
+      setPasswordErrors([]);
     }
   };
 
@@ -213,14 +275,41 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
               <input
                 type="password"
-                placeholder="Password"
+                placeholder={mode === 'signup' ? 'Strong Password (8+ chars)' : 'Password'}
                 className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-dahab-teal/50 transition text-gray-900"
                 value={formData.password}
-                onChange={e => setFormData({...formData, password: e.target.value})}
+                onChange={e => handlePasswordChange(e.target.value)}
                 required
-                minLength={6}
+                minLength={mode === 'signup' ? 8 : 6}
               />
             </div>
+
+            {/* Password Strength Indicator (Signup Only) */}
+            {mode === 'signup' && formData.password && (
+              <div className="space-y-2 animate-fade-in">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck size={16} className={passwordErrors.length === 0 ? 'text-green-500' : 'text-gray-400'} />
+                  <span className={`text-xs font-medium ${passwordErrors.length === 0 ? 'text-green-600' : 'text-gray-500'}`}>
+                    Password Strength
+                  </span>
+                </div>
+                {passwordErrors.length > 0 ? (
+                  <ul className="space-y-1">
+                    {passwordErrors.map((err, idx) => (
+                      <li key={idx} className="text-xs text-red-600 flex items-start gap-1.5">
+                        <AlertCircle size={12} className="mt-0.5 flex-shrink-0" />
+                        <span>{err}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="flex items-center gap-1.5 text-xs text-green-600">
+                    <CheckCircle size={12} />
+                    <span>Password meets all requirements</span>
+                  </div>
+                )}
+              </div>
+            )}
 
             {mode === 'signup' && (
               <label className={`flex items-start gap-3 p-4 border rounded-xl cursor-pointer transition animate-fade-in ${isProviderSignup ? 'bg-teal-50 border-dahab-teal' : 'border-gray-200 hover:bg-gray-50'}`}>
@@ -243,10 +332,36 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               </label>
             )}
 
+            {/* Success Message - Email Verification Sent */}
+            {showVerificationMessage && (
+              <div className="flex flex-col gap-2 p-4 bg-green-50 border border-green-200 rounded-xl text-sm animate-fade-in">
+                <div className="flex items-center gap-2 text-green-700 font-medium">
+                  <CheckCircle size={18} />
+                  <span>Verification Email Sent!</span>
+                </div>
+                <p className="text-green-600 text-xs">
+                  Please check your inbox and click the verification link to activate your account. Then you can log in.
+                </p>
+              </div>
+            )}
+
+            {/* Error Message */}
             {error && (
-              <div className="flex items-center gap-2 p-3 bg-red-50 text-red-600 rounded-xl text-sm animate-fade-in">
-                <AlertCircle size={16} />
-                {error}
+              <div className="flex flex-col gap-2 p-3 bg-red-50 text-red-600 rounded-xl text-sm animate-fade-in">
+                <div className="flex items-center gap-2">
+                  <AlertCircle size={16} />
+                  <span>{error}</span>
+                </div>
+                {needsVerification && (
+                  <button
+                    type="button"
+                    onClick={handleResendVerification}
+                    disabled={loading}
+                    className="mt-2 w-full bg-white border border-red-300 text-red-600 py-2 px-4 rounded-lg text-xs font-medium hover:bg-red-50 transition disabled:opacity-50"
+                  >
+                    {loading ? 'Sending...' : 'Resend Verification Email'}
+                  </button>
+                )}
               </div>
             )}
 
