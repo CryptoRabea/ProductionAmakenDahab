@@ -9,8 +9,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@capacitor/android": "^8.0.0",
-    "@capacitor/cli": "^8.0.0",
     "@capacitor/core": "^8.0.0",
     "@google/genai": "^1.33.0",
     "@vitejs/plugin-react": "^5.1.2",
@@ -23,6 +21,8 @@
     "vite": "^7.2.7"
   },
   "devDependencies": {
+    "@capacitor/android": "^8.0.0",
+    "@capacitor/cli": "^8.0.0",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
     "autoprefixer": "^10.4.20",
