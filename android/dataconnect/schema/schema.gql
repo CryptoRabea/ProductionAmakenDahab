@@ -1,0 +1,50 @@
+type User @table {
+  username: String!
+  email: String!
+  createdAt: Timestamp!
+  displayName: String
+  photoUrl: String
+}
+
+type Event @table {
+  title: String!
+  description: String!
+  location: String!
+  startTime: Timestamp!
+  endTime: Timestamp!
+  createdAt: Timestamp!
+  isPublic: Boolean!
+  category: String
+  price: Float
+  capacity: Int
+  organizer: User
+}
+
+type Booking @table(key: ["user", "event"]) {
+  user: User!
+  event: Event!
+  bookingDate: Timestamp!
+  status: String!
+}
+
+type Comment @table {
+  text: String!
+  createdAt: Timestamp!
+  user: User
+  event: Event
+}
+
+type SubscriptionType @table {
+  name: String!
+  price: Float!
+  duration: String!
+  features: String!
+}
+
+type UserSubscription @table(key: ["user", "subscriptionType"]) {
+  user: User!
+  subscriptionType: SubscriptionType!
+  startDate: Timestamp!
+  endDate: Timestamp!
+  status: String!
+}
