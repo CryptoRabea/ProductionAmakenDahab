@@ -1,0 +1,20 @@
+{
+  "short_name": "AmakenDahab",
+  "name": "AmakenDahab Social Hub",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/1042/1042390.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/1042/1042390.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#0d9488",
+  "background_color": "#f8fafc"
+}

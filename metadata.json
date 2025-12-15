@@ -1,0 +1,9 @@
+{
+  "name": "AmakenDahab",
+  "description": "The ultimate social hub and service booking platform for Dahab, Egypt. Find events, drivers, and local services.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}
