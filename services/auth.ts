@@ -169,9 +169,19 @@ export async function loginWithEmail(
 ): Promise<User> {
   // Check for mock admin user (for immediate testing without Firebase setup)
   // Case-insensitive email comparison
-  if (email.toLowerCase() === MOCK_ADMIN.email.toLowerCase() && password === MOCK_ADMIN.password) {
-    console.log('✅ Mock admin login successful:', MOCK_ADMIN.user.name);
-    return MOCK_ADMIN.user;
+  console.log('🔍 Login attempt:', email.toLowerCase());
+
+  if (email.toLowerCase() === MOCK_ADMIN.email.toLowerCase()) {
+    console.log('📧 Email matches mock admin');
+    if (password === MOCK_ADMIN.password) {
+      console.log('✅ Mock admin login successful:', MOCK_ADMIN.user.name);
+      return MOCK_ADMIN.user;
+    } else {
+      console.log('❌ Password incorrect for mock admin');
+      console.log('Expected:', MOCK_ADMIN.password);
+      console.log('Received:', password);
+      throw new Error('Invalid email or password. (Hint: Password is case-sensitive)');
+    }
   }
 
   try {
