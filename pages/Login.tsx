@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { User, UserRole } from '../types';
-import { db } from '../services/mockDatabase';
+import { db } from '../services/database';
 import { Mail, Lock, User as UserIcon, ArrowRight, Check, Facebook, Loader2, Briefcase, AlertCircle } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
 
@@ -49,7 +49,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       if (user.role === UserRole.ADMIN) navigate('/admin');
       else if (user.role === UserRole.PROVIDER) navigate('/provider-dashboard');
       else navigate('/');
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
       setError(e.message || 'Social authentication failed.');
     } finally {
@@ -89,7 +89,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       else if (user.role === UserRole.PROVIDER) navigate('/provider-dashboard');
       else navigate('/');
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Auth Error", err);
       // Friendly error messages
       if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {

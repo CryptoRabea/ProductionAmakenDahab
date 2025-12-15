@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { User, Post, UserRole, Comment } from '../types';
-import { db } from '../services/mockDatabase';
+import { db } from '../services/database';
 import { 
   Image, Video, Heart, MessageCircle, Share2, 
   Send, MoreHorizontal, ShieldCheck, Car, User as UserIcon, Loader2, X 

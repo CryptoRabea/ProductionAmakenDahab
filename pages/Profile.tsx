@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { User, Event, Booking } from '../types';
-import { db } from '../services/mockDatabase';
+import { db } from '../services/database';
 import { Mail, Shield, User as UserIcon, Calendar, MapPin, Heart, LogOut } from 'lucide-react';
 import { Link } from 'react-router-dom';
 

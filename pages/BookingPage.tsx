@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { CheckCircle, Upload, Smartphone, ArrowRight, Loader2, MapPin } from 'lucide-react';
-import { db } from '../services/mockDatabase';
+import { db } from '../services/database';
 import { User, Event, ServiceProvider, BookingStatus, PaymentMethod } from '../types';
 import EventMap from '../components/EventMap';
 

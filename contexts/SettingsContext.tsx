@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AppSettings } from '../types';
-import { db } from '../services/mockDatabase';
+import { db } from '../services/database';
 
 interface SettingsContextType {
   settings: AppSettings;

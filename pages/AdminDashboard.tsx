@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { db } from '../services/mockDatabase';
+import { db } from '../services/database';
 import { Booking, BookingStatus, Event, User, UserRole } from '../types';
 import { Check, X, Plus, Image as ImageIcon, Trash2, Upload, Palette, Settings, UserCheck, ShieldAlert, Edit2, Calendar, Clock, AlertCircle, Star, LogOut, DollarSign, ExternalLink } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';

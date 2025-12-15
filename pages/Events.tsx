@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Calendar, MapPin, Clock, Search, X, CalendarPlus, Heart, MessageSquare, Map as MapIcon, List, Download, ExternalLink, Star, Plus, Trash2, Edit, Image as ImageIcon } from 'lucide-react';
 import { Event, User } from '../types';
-import { db } from '../services/mockDatabase';
+import { db } from '../services/database';
 import ReviewsModal from '../components/ReviewsModal';
 import EventMap from '../components/EventMap';
 import { useSettings } from '../contexts/SettingsContext';
