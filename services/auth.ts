@@ -20,6 +20,21 @@ import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 import { auth, db, googleProvider, facebookProvider } from './firebase';
 import { User, UserRole } from '../types';
 
+// Mock Admin User for immediate testing (bypasses email verification)
+const MOCK_ADMIN = {
+  email: 'Rahma@organizer.com',
+  password: 'Organizer@2024!',
+  user: {
+    id: 'mock-admin-rahma',
+    name: 'Rahma - Event Organizer',
+    email: 'Rahma@organizer.com',
+    role: UserRole.ADMIN,
+    isEmailVerified: true,
+    provider: 'mock',
+    savedEventIds: []
+  } as User
+};
+
 // Password strength requirements
 const PASSWORD_REQUIREMENTS = {
   minLength: 8,
@@ -148,6 +163,12 @@ export async function loginWithEmail(
   email: string,
   password: string
 ): Promise<User> {
+  // Check for mock admin user (for immediate testing without Firebase setup)
+  if (email === MOCK_ADMIN.email && password === MOCK_ADMIN.password) {
+    console.log('✅ Mock admin login successful:', MOCK_ADMIN.user.name);
+    return MOCK_ADMIN.user;
+  }
+
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const firebaseUser = userCredential.user;
