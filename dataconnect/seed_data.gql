@@ -1,0 +1,81 @@
+mutation SeedDatabase @transaction @auth(level: PUBLIC, insecureReason: "This operation is for seeding data and is safe to expose to the public") {
+  user_insertMany(data: [
+    {
+      id: "550e8400-e29b-41d4-a716-446655440000",
+      createdAt: "2024-04-26T12:00:00Z",
+      displayName: "Demo User 1",
+      email: "demo1@example.com"
+    },
+    {
+      id: "550e8400-e29b-41d4-a716-446655440001",
+      createdAt: "2024-04-26T13:00:00Z",
+      displayName: "Demo User 2",
+      email: "demo2@example.com"
+    }
+  ])
+  event_insertMany(data: [
+    {
+      id: "650e8400-e29b-41d4-a716-446655440002",
+      organizerId: "550e8400-e29b-41d4-a716-446655440000",
+      category: "Music",
+      createdAt: "2024-04-27T10:00:00Z",
+      description: "A demo music event",
+      endDate: "2024-04-28T22:00:00Z",
+      location: "Demo Location 1",
+      startDate: "2024-04-28T19:00:00Z",
+      title: "Demo Music Event"
+    },
+    {
+      id: "750e8400-e29b-41d4-a716-446655440003",
+      organizerId: "550e8400-e29b-41d4-a716-446655440001",
+      category: "Sports",
+      createdAt: "2024-04-27T11:00:00Z",
+      description: "A demo sports event",
+      endDate: "2024-04-29T18:00:00Z",
+      location: "Demo Location 2",
+      maxAttendees: 100,
+      startDate: "2024-04-29T14:00:00Z",
+      title: "Demo Sports Event"
+    }
+  ])
+  ticketType_insertMany(data: [
+    {
+      id: "850e8400-e29b-41d4-a716-446655440004",
+      eventId: "650e8400-e29b-41d4-a716-446655440002",
+      createdAt: "2024-04-27T12:00:00Z",
+      name: "General Admission",
+      price: 20.0,
+      quantityAvailable: 50
+    },
+    {
+      id: "950e8400-e29b-41d4-a716-446655440005",
+      eventId: "750e8400-e29b-41d4-a716-446655440003",
+      createdAt: "2024-04-27T13:00:00Z",
+      name: "VIP",
+      price: 50.0,
+      quantityAvailable: 20
+    }
+  ])
+  booking_insertMany(data: [
+    {
+      id: "a50e8400-e29b-41d4-a716-446655440006",
+      eventId: "650e8400-e29b-41d4-a716-446655440002",
+      ticketTypeId: "850e8400-e29b-41d4-a716-446655440004",
+      userId: "550e8400-e29b-41d4-a716-446655440000",
+      bookingDate: "2024-04-27T14:00:00Z",
+      quantity: 2,
+      status: "Confirmed",
+      totalPrice: 40.0
+    },
+    {
+      id: "b50e8400-e29b-41d4-a716-446655440007",
+      eventId: "750e8400-e29b-41d4-a716-446655440003",
+      ticketTypeId: "950e8400-e29b-41d4-a716-446655440005",
+      userId: "550e8400-e29b-41d4-a716-446655440001",
+      bookingDate: "2024-04-27T15:00:00Z",
+      quantity: 1,
+      status: "Confirmed",
+      totalPrice: 50.0
+    }
+  ])
+}

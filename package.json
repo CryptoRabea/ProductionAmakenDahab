@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@capacitor/core": "^8.0.0",
+    "@dataconnect/generated": "file:src/dataconnect-generated",
     "@google/genai": "^1.33.0",
     "@vitejs/plugin-react": "^5.1.2",
     "firebase": "^12.6.0",
