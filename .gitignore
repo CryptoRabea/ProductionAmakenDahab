@@ -70,3 +70,8 @@ functions/.env
 # OS files
 .DS_Store
 Thumbs.db
+
+# Android signing keys - NEVER COMMIT THESE!
+android/key.properties
+android/app/*.keystore
+*.keystore
