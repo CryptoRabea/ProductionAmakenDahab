@@ -1,43 +1,41 @@
-import { GoogleGenAI } from "@google/genai";
+/**
+ * Gemini AI Service - Secure Cloud Function Implementation
+ *
+ * This service calls a Firebase Cloud Function to interact with Gemini AI.
+ * The API key is kept secure on the backend and never exposed to clients.
+ */
 
 export const getDahabConciergeResponse = async (query: string): Promise<string> => {
-  // Use process.env.API_KEY directly. Vite replaces 'process.env' with the env object during build.
-  // We assume the variable is pre-configured as per guidelines.
-  const apiKey = process.env.API_KEY;
+  const cloudFunctionUrl = import.meta.env.VITE_CLOUD_FUNCTION_URL;
 
-  if (!apiKey) {
-    console.warn("API_KEY is missing in environment variables");
-    return "I'm sorry, I cannot connect to the AI service right now. Please check the configuration.";
+  if (!cloudFunctionUrl) {
+    console.warn("Cloud Function URL not configured");
+    return "I'm sorry, the concierge service is not configured yet. Please contact support.";
   }
 
   try {
-    const ai = new GoogleGenAI({ apiKey: apiKey });
-    
-    const systemInstruction = `
-      You are an expert concierge and local guide for Dahab, Egypt. 
-      The user is using the "AmakenDahab" app.
-      Your tone should be relaxed, friendly, and helpful (the "Dahab vibe").
-      
-      You can help with:
-      1. Recommending types of events (Parties, Diving, Hikes, Yoga).
-      2. Suggesting local areas (Lighthouse, Mashraba, Laguna, Assalah).
-      3. Explaining how to pay with Vodafone Cash or Instapay in Egypt.
-      4. Giving tips on wind conditions for kitesurfing.
-      
-      Keep answers concise and formatted nicely. Do not make up specific phone numbers, but you can suggest general places.
-    `;
-
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: query,
-      config: {
-        systemInstruction: systemInstruction,
-      }
+    const response = await fetch(cloudFunctionUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ query }),
     });
 
-    return response.text || "I'm having a bit of trouble hearing the waves. Can you ask that again?";
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data.success && data.response) {
+      return data.response;
+    } else {
+      throw new Error(data.error || 'Unknown error');
+    }
+
   } catch (error) {
-    console.error("Gemini Error:", error);
+    console.error("Gemini Service Error:", error);
     return "Sorry, I'm taking a break by the sea. Please try again later.";
   }
 };

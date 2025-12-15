@@ -46,3 +46,27 @@ build
 
 # OS files
 Thumbs.db
+
+# Production build
+dist/
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+functions/lib/
+functions/node_modules/
+functions/.env
+
+# Backup files
+*-old.*
+*.backup
+
+# OS files
+.DS_Store
+Thumbs.db

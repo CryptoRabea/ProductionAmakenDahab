@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Star, Phone, ShieldCheck, Car, Briefcase } from 'lucide-react';
 import { ServiceProvider, User } from '../types';
-import { db } from '../services/mockDatabase';
+import { db } from '../services/database';
 import ReviewsModal from '../components/ReviewsModal';
 
 interface ServicesProps {

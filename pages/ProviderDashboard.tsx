@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { User, Event, UserRole, Booking } from '../types';
-import { db } from '../services/mockDatabase';
+import { db } from '../services/database';
 import { Plus, Clock, CheckCircle, XCircle, Calendar, MapPin, Edit2, Trash2, Eye, BarChart3, Users, DollarSign, ShieldAlert, LogOut, Upload, Loader2, Smartphone } from 'lucide-react';
 import EventFormModal from '../components/EventFormModal';
 import { useNavigate } from 'react-router-dom';

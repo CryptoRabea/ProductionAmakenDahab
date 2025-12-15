@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Star, Send, Loader2, User as UserIcon } from 'lucide-react';
 import { Review, User } from '../types';
-import { db } from '../services/mockDatabase';
+import { db } from '../services/database';
 
 interface ReviewsModalProps {
   itemId: string | null;
