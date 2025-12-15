@@ -92,9 +92,13 @@ async function createUserDocument(
     role,
     isEmailVerified: firebaseUser.emailVerified,
     provider: firebaseUser.providerData[0]?.providerId || 'email',
-    savedEventIds: [],
-    providerStatus: isProvider ? 'pending' : undefined
+    savedEventIds: []
   };
+
+  // Only add providerStatus if user is registering as a provider
+  if (isProvider) {
+    user.providerStatus = 'pending';
+  }
 
   await setDoc(doc(db, 'users', firebaseUser.uid), user);
   return user;
