@@ -1,0 +1,40 @@
+type User @table {
+  displayName: String!
+  email: String!
+  createdAt: Timestamp!
+  photoUrl: String
+  phoneNumber: String
+}
+
+type Event @table {
+  title: String!
+  description: String!
+  startDate: Timestamp!
+  endDate: Timestamp!
+  location: String!
+  createdAt: Timestamp!
+  organizer: User
+  category: String
+  imageUrl: String
+  maxAttendees: Int
+}
+
+type TicketType @table {
+  name: String!
+  price: Float!
+  quantityAvailable: Int!
+  createdAt: Timestamp!
+  event: Event!
+  description: String
+}
+
+type Booking @table {
+  bookingDate: Timestamp!
+  quantity: Int!
+  totalPrice: Float!
+  status: String!
+  user: User!
+  ticketType: TicketType!
+  event: Event!
+  paymentConfirmationCode: String
+}

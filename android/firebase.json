@@ -1,7 +1,4 @@
 {
-  "database": {
-    "rules": "database.rules.json"
-  },
   "emulators": {
     "dataconnect": {
       "dataDir": "dataconnect/.dataconnect/pgliteData"
@@ -12,7 +9,7 @@
   },
   "firestore": {
     "database": "(default)",
-    "location": "europe-west1",
+    "location": "europe-southwest1",
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
   },
@@ -43,5 +40,8 @@
   },
   "storage": {
     "rules": "storage.rules"
+  },
+  "database": {
+    "rules": "database.rules.json"
   }
 }

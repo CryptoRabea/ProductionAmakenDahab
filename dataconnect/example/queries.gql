@@ -1,0 +1,42 @@
+mutation CreateUser($displayName: String!, $email: String!) @auth(level: USER) {
+  user_insert(data: {displayName: $displayName, email: $email, createdAt_expr: "request.time", id_expr: "uuidV4()"})
+}
+
+query ListEvents @auth(level: PUBLIC, insecureReason: "This operation is safe to expose to the public") {
+  events {
+    id
+    title
+    description
+    location
+    startDate
+    endDate
+    category
+    imageUrl
+  }
+}
+
+mutation CreateBooking($eventId: UUID!, $ticketTypeId: UUID!, $quantity: Int!) @auth(level: USER) {
+  booking_insert(data: {eventId: $eventId, ticketTypeId: $ticketTypeId, userId_expr: "auth.uid", bookingDate_expr: "request.time", quantity: $quantity, status: "pending", totalPrice: 100.0})
+}
+
+query GetUserBookings @auth(level: USER) {
+  bookings(where: {userId: {eq_expr: "auth.uid"}}) {
+    id
+    bookingDate
+    quantity
+    totalPrice
+    event {
+      id
+      title
+      description
+      location
+      startDate
+      endDate
+    }
+    ticketType {
+      id
+      name
+      price
+    }
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "227241553128",
+    "firebase_url": "https://amakendahab-default-rtdb.firebaseio.com",
+    "project_id": "amakendahab",
+    "storage_bucket": "amakendahab.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:227241553128:android:ff87e9687b9041d1a9ad5d",
+        "android_client_info": {
+          "package_name": "com.amakendahab.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCaEMbOPBdk0Af58bKcplK43piIAT_YT7M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:227241553128:android:cbc1e9cc00559fdea9ad5d",
+        "android_client_info": {
+          "package_name": "com.crg.amakendahab"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCaEMbOPBdk0Af58bKcplK43piIAT_YT7M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
