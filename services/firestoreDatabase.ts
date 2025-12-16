@@ -159,22 +159,37 @@ class FirestoreDatabase {
   // --- SETTINGS ---
   async getSettings(): Promise<AppSettings> {
     if (!this.useFirestore) {
+      console.log('📦 Using default settings (Firestore not configured)');
       return INITIAL_SETTINGS;
     }
 
     try {
+      console.log('📖 Fetching app settings from Firestore...');
       const settingsDoc = await getDoc(doc(db, 'settings', 'app'));
       if (settingsDoc.exists()) {
+        console.log('✅ App settings loaded from Firestore');
         const settings = settingsDoc.data() as AppSettings;
         if (!settings.contentOverrides) settings.contentOverrides = {};
         return settings;
       }
 
+      console.log('⚠️ No settings found, initializing with defaults...');
       // Initialize with default settings
       await setDoc(doc(db, 'settings', 'app'), INITIAL_SETTINGS);
+      console.log('✅ Default settings saved to Firestore');
       return INITIAL_SETTINGS;
-    } catch (error) {
-      console.error('Error fetching settings:', error);
+    } catch (error: any) {
+      console.error('❌ Error fetching settings:', error);
+
+      // Check if it's a permissions error
+      if (error.code === 'permission-denied' || error.message?.includes('permission')) {
+        console.error('🔒 Firestore permissions error. Using default settings.');
+        console.error('💡 To fix: Deploy Firestore rules using Firebase Console');
+        console.error('   Go to: https://console.firebase.google.com/project/amakendahab/firestore/rules');
+      }
+
+      // Return default settings as fallback
+      console.log('📦 Using default settings as fallback');
       return INITIAL_SETTINGS;
     }
   }
