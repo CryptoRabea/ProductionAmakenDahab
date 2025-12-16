@@ -27,27 +27,35 @@ let googleProvider: GoogleAuthProvider;
 let facebookProvider: FacebookAuthProvider;
 
 if (isFirebaseConfigured) {
-  // Initialize Firebase
-  app = initializeApp(firebaseConfig);
+  try {
+    // Initialize Firebase
+    app = initializeApp(firebaseConfig);
 
-  // Initialize services
-  auth = getAuth(app);
-  db = getFirestore(app);
-  storage = getStorage(app);
+    // Initialize services
+    auth = getAuth(app);
+    db = getFirestore(app);
+    storage = getStorage(app);
 
-  // Configure auth providers
-  googleProvider = new GoogleAuthProvider();
-  googleProvider.setCustomParameters({
-    prompt: 'select_account'
-  });
+    // Configure auth providers
+    googleProvider = new GoogleAuthProvider();
+    googleProvider.setCustomParameters({
+      prompt: 'select_account'
+    });
 
-  facebookProvider = new FacebookAuthProvider();
+    facebookProvider = new FacebookAuthProvider();
 
-  console.log('✅ Firebase initialized successfully');
+    console.log('✅ Firebase initialized successfully');
+    console.log('📦 Firebase Project ID:', firebaseConfig.projectId);
+  } catch (error: any) {
+    console.error('❌ Firebase initialization failed:', error);
+    console.error('Please check your Firebase configuration in .env file');
+    throw new Error(`Firebase initialization error: ${error.message}`);
+  }
 } else {
-  console.warn('⚠️ Firebase configuration incomplete. Please set environment variables.');
-  console.warn('Required variables: VITE_FIREBASE_API_KEY, VITE_FIREBASE_AUTH_DOMAIN, etc.');
-  console.warn('See .env.example for template');
+  console.error('❌ Firebase configuration incomplete. Please set environment variables.');
+  console.error('Required variables: VITE_FIREBASE_API_KEY, VITE_FIREBASE_AUTH_DOMAIN, etc.');
+  console.error('See .env.example for template');
+  console.error('Create a .env file with your Firebase credentials to enable authentication.');
 
   // Provide mock objects for development without Firebase
   app = {} as FirebaseApp;

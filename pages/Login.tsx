@@ -78,8 +78,23 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setShowVerificationMessage(false);
     setNeedsVerification(false);
 
+    // Validate all required fields
     if (!formData.email || !formData.password) {
-      setError('Please fill in all fields');
+      setError('Please fill in all fields (email and password required)');
+      return;
+    }
+
+    if (mode === 'signup' && !formData.name) {
+      setError('Please fill in all fields (name, email, and password required)');
+      return;
+    }
+
+    // Trim whitespace from inputs
+    const trimmedName = formData.name.trim();
+    const trimmedEmail = formData.email.trim();
+
+    if (mode === 'signup' && trimmedName.length < 2) {
+      setError('Name must be at least 2 characters long');
       return;
     }
 
@@ -88,11 +103,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     try {
       if (mode === 'signup') {
         // Signup mode
-        if (!formData.name) {
-          setError('Name is required for signup');
-          setLoading(false);
-          return;
-        }
+        console.log('📝 Starting signup process...');
 
         // Validate password before submitting
         const validation = validatePassword(formData.password);
@@ -104,11 +115,13 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         }
 
         const result = await registerWithEmail(
-          formData.name,
-          formData.email,
+          trimmedName,
+          trimmedEmail,
           formData.password,
           isProviderSignup
         );
+
+        console.log('✅ Signup successful, verification email sent');
 
         // Show verification message
         setShowVerificationMessage(true);
@@ -118,8 +131,10 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         // Don't login yet - user needs to verify email
       } else {
         // Login mode
-        const user = await loginWithEmail(formData.email, formData.password);
+        console.log('🔐 Starting login process...');
+        const user = await loginWithEmail(trimmedEmail, formData.password);
 
+        console.log('✅ Login successful, redirecting...');
         onLogin(user);
 
         // Routing based on Role
@@ -128,12 +143,14 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         else navigate('/');
       }
     } catch (err: any) {
-      console.error("Auth Error", err);
+      console.error("❌ Auth Error:", err);
 
       // Check if it's an email verification error
       if (err.message?.includes('verify your email')) {
         setNeedsVerification(true);
         setError(err.message);
+      } else if (err.message?.includes('Firebase') && err.message?.includes('not initialized')) {
+        setError('System configuration error. Please contact support or check your internet connection.');
       } else {
         setError(err.message || 'Authentication failed. Please try again.');
       }
