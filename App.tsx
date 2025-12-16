@@ -199,7 +199,7 @@ const AppContent: React.FC = () => {
         {user?.role === UserRole.ADMIN && (
           <button
             onClick={toggleEditing}
-            className={`fixed bottom-24 right-4 md:right-10 p-4 rounded-full shadow-xl z-50 transition-all transform hover:scale-105 ${isEditing ? 'bg-orange-500 text-white' : 'bg-gray-900 text-white'}`}
+            className={`fixed bottom-28 right-4 md:right-10 p-4 rounded-full shadow-xl z-50 transition-all transform hover:scale-105 ${isEditing ? 'bg-orange-500 text-white' : 'bg-gray-900 text-white'}`}
             title={isEditing ? "Exit Edit Mode" : "Enter Edit Mode"}
             aria-label={isEditing ? "Exit Edit Mode" : "Enter Edit Mode"}
           >
