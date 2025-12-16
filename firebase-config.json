@@ -1,0 +1,14 @@
+ {
+  "version": "2",
+  "projectNumber": "227241553128",
+  "projectId": "amakendahab",
+  "appId": "1:227241553128:web:34dc089b41abfda2a9ad5d",
+  "realtimeDatabaseInstanceUri": "https://amakendahab-default-rtdb.firebaseio.com",
+  "realtimeDatabaseUrl": "",
+  "storageBucket": "amakendahab.firebasestorage.app",
+  "locationId": "",
+  "apiKey": "AIzaSyBnR_11fhP0NrfXuupRDYTidy5NZkYBGN8",
+  "authDomain": "amakendahab.firebaseapp.com",
+  "messagingSenderId": "227241553128",
+  "measurementId": "G-V0TGD5VK4B"
+}
