@@ -1,0 +1,5 @@
+# Generated files
+src/dataconnect-admin-generated/
+lib/
+node_modules/
+*.log
