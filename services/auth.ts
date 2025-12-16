@@ -85,10 +85,17 @@ async function createUserDocument(
   role: UserRole = UserRole.USER,
   isProvider: boolean = false
 ): Promise<User> {
+  console.log('💾 Creating user document for:', { uid: firebaseUser.uid, name, role, isProvider });
+
+  if (!firebaseUser.email) {
+    console.error('❌ Firebase user has no email');
+    throw new Error('User email is required but not found.');
+  }
+
   const user: User = {
     id: firebaseUser.uid,
     name,
-    email: firebaseUser.email!,
+    email: firebaseUser.email,
     role,
     isEmailVerified: firebaseUser.emailVerified,
     provider: firebaseUser.providerData[0]?.providerId || 'email',
@@ -98,9 +105,18 @@ async function createUserDocument(
   // Only add providerStatus if user is registering as a provider
   if (isProvider) {
     user.providerStatus = 'pending';
+    console.log('✅ User registered as provider, status set to pending');
   }
 
-  await setDoc(doc(db, 'users', firebaseUser.uid), user);
+  try {
+    console.log('📝 Writing to Firestore...');
+    await setDoc(doc(db, 'users', firebaseUser.uid), user);
+    console.log('✅ User document saved to Firestore');
+  } catch (error: any) {
+    console.error('❌ Failed to save user document to Firestore:', error);
+    throw new Error(`Failed to save user profile: ${error.message}`);
+  }
+
   return user;
 }
 
@@ -122,31 +138,54 @@ export async function registerWithEmail(
   password: string,
   isProvider: boolean = false
 ): Promise<{ user: User; needsVerification: boolean }> {
+  console.log('🔵 Registration attempt:', { name, email, isProvider });
+
+  // Validate inputs
+  if (!name || !email || !password) {
+    console.error('❌ Missing required fields');
+    throw new Error('Please provide name, email, and password.');
+  }
+
+  if (name.trim().length < 2) {
+    throw new Error('Name must be at least 2 characters long.');
+  }
+
   // Validate password
   const validation = validatePassword(password);
   if (!validation.valid) {
+    console.error('❌ Password validation failed:', validation.errors);
     throw new Error(validation.errors.join('. '));
   }
 
   try {
+    console.log('📝 Creating Firebase Auth user...');
     // Create Firebase Auth user
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const firebaseUser = userCredential.user;
+    console.log('✅ Firebase Auth user created:', firebaseUser.uid);
 
     // Update display name
+    console.log('📝 Updating display name...');
     await updateProfile(firebaseUser, { displayName: name });
+    console.log('✅ Display name updated');
 
     // Send email verification
+    console.log('📧 Sending verification email...');
     await sendEmailVerification(firebaseUser);
+    console.log('✅ Verification email sent');
 
     // Create user document in Firestore
+    console.log('💾 Creating Firestore user document...');
     const user = await createUserDocument(firebaseUser, name, UserRole.USER, isProvider);
+    console.log('✅ Firestore user document created:', user.id);
 
     return {
       user,
       needsVerification: true
     };
   } catch (error: any) {
+    console.error('❌ Registration error:', error);
+
     // Handle Firebase Auth errors
     if (error.code === 'auth/email-already-in-use') {
       throw new Error('This email is already registered. Please login instead.');
@@ -154,6 +193,12 @@ export async function registerWithEmail(
       throw new Error('Invalid email address.');
     } else if (error.code === 'auth/weak-password') {
       throw new Error('Password is too weak. Please use a stronger password.');
+    } else if (error.code === 'auth/network-request-failed') {
+      throw new Error('Network error. Please check your internet connection.');
+    } else if (error.message?.includes('Firebase') || error.code?.startsWith('auth/')) {
+      throw new Error(`Firebase error: ${error.message}`);
+    } else if (error.message?.includes('Firestore') || error.code?.startsWith('firestore/')) {
+      throw new Error(`Database error: ${error.message}. User account created but profile not saved.`);
     } else {
       throw new Error(error.message || 'Registration failed. Please try again.');
     }
@@ -167,10 +212,16 @@ export async function loginWithEmail(
   email: string,
   password: string
 ): Promise<User> {
-  // Check for mock admin user (for immediate testing without Firebase setup)
-  // Case-insensitive email comparison
   console.log('🔍 Login attempt:', email.toLowerCase());
 
+  // Validate inputs
+  if (!email || !password) {
+    console.error('❌ Missing email or password');
+    throw new Error('Please provide both email and password.');
+  }
+
+  // Check for mock admin user (for immediate testing without Firebase setup)
+  // Case-insensitive email comparison
   if (email.toLowerCase() === MOCK_ADMIN.email.toLowerCase()) {
     console.log('📧 Email matches mock admin');
     if (password === MOCK_ADMIN.password) {
@@ -185,25 +236,32 @@ export async function loginWithEmail(
   }
 
   try {
+    console.log('🔐 Attempting Firebase authentication...');
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const firebaseUser = userCredential.user;
+    console.log('✅ Firebase authentication successful:', firebaseUser.uid);
 
     // Check if email is verified
     if (!firebaseUser.emailVerified) {
+      console.log('⚠️ Email not verified for user:', firebaseUser.uid);
       throw new Error('EMAIL_NOT_VERIFIED');
     }
 
     // Get user document from Firestore
+    console.log('📖 Fetching user document from Firestore...');
     let user = await getUserDocument(firebaseUser.uid);
 
     // Create user document if it doesn't exist (for legacy users)
     if (!user) {
+      console.log('⚠️ User document not found, creating new one...');
       user = await createUserDocument(
         firebaseUser,
         firebaseUser.displayName || 'User',
         UserRole.USER
       );
+      console.log('✅ User document created');
     } else {
+      console.log('✅ User document found:', user.name);
       // Update email verification status
       await updateDoc(doc(db, 'users', firebaseUser.uid), {
         isEmailVerified: true
@@ -211,14 +269,21 @@ export async function loginWithEmail(
       user.isEmailVerified = true;
     }
 
+    console.log('✅ Login successful');
     return user;
   } catch (error: any) {
+    console.error('❌ Login error:', error);
+
     if (error.message === 'EMAIL_NOT_VERIFIED') {
       throw new Error('Please verify your email before logging in. Check your inbox for the verification link.');
     } else if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
       throw new Error('Invalid email or password.');
     } else if (error.code === 'auth/too-many-requests') {
       throw new Error('Too many failed login attempts. Please try again later.');
+    } else if (error.code === 'auth/network-request-failed') {
+      throw new Error('Network error. Please check your internet connection.');
+    } else if (error.code === 'auth/invalid-email') {
+      throw new Error('Invalid email address format.');
     } else {
       throw new Error(error.message || 'Login failed. Please try again.');
     }
