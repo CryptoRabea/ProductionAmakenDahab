@@ -19,10 +19,26 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
-    db.getSettings().then(s => {
-      setSettings(s);
-      setLoading(false);
-    });
+    db.getSettings()
+      .then(s => {
+        setSettings(s);
+        setLoading(false);
+      })
+      .catch(error => {
+        console.error('Failed to load settings:', error);
+        // Use a minimal default if settings fail to load
+        setSettings({
+          appName: 'AmakenDahab',
+          logoUrl: 'https://cdn-icons-png.flaticon.com/512/1042/1042390.png',
+          heroImages: [
+            "https://images.unsplash.com/photo-1544550581-5f7ceaf7f992?q=80&w=1920&auto=format&fit=crop",
+            "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?q=80&w=1920&auto=format&fit=crop"
+          ],
+          backgroundStyle: 'linear-gradient(to bottom, #0f172a, #1e293b)',
+          contentOverrides: {}
+        });
+        setLoading(false);
+      });
   }, []);
 
   const updateSettings = async (newSettings: AppSettings) => {
