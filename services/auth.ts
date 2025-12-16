@@ -241,11 +241,13 @@ export async function loginWithEmail(
     const firebaseUser = userCredential.user;
     console.log('✅ Firebase authentication successful:', firebaseUser.uid);
 
-    // Check if email is verified
-    if (!firebaseUser.emailVerified) {
-      console.log('⚠️ Email not verified for user:', firebaseUser.uid);
-      throw new Error('EMAIL_NOT_VERIFIED');
-    }
+    // Check if email is verified (DISABLED FOR TESTING)
+    // TODO: Re-enable email verification before production deployment
+    // if (!firebaseUser.emailVerified) {
+    //   console.log('⚠️ Email not verified for user:', firebaseUser.uid);
+    //   throw new Error('EMAIL_NOT_VERIFIED');
+    // }
+    console.log('⚠️ Email verification check disabled for testing');
 
     // Get user document from Firestore
     console.log('📖 Fetching user document from Firestore...');
