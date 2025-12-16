@@ -9,7 +9,7 @@
   },
   "firestore": {
     "database": "(default)",
-    "location": "europe-southwest1",
+    "location": "europe-west1",
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
   },
@@ -25,7 +25,7 @@
     ]
   },
   "hosting": {
-    "public": "public",
+    "public": "dist",
     "ignore": [
       "firebase.json",
       "**/.*",
