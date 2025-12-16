@@ -11,6 +11,7 @@ import {
   signInWithPopup,
   signOut as firebaseSignOut,
   sendEmailVerification,
+  sendPasswordResetEmail,
   User as FirebaseUser,
   updateProfile,
   GoogleAuthProvider,
@@ -396,6 +397,35 @@ export async function promoteToAdmin(uid: string, currentUserRole: UserRole): Pr
   await updateDoc(doc(db, 'users', uid), {
     role: UserRole.ADMIN
   });
+}
+
+/**
+ * Send password reset email
+ */
+export async function sendPasswordReset(email: string): Promise<void> {
+  console.log('📧 Sending password reset email to:', email);
+
+  if (!email) {
+    throw new Error('Please provide an email address.');
+  }
+
+  try {
+    await sendPasswordResetEmail(auth, email);
+    console.log('✅ Password reset email sent');
+  } catch (error: any) {
+    console.error('❌ Password reset error:', error);
+
+    if (error.code === 'auth/user-not-found') {
+      // For security, don't reveal if email exists or not
+      throw new Error('If an account exists with this email, you will receive a password reset link.');
+    } else if (error.code === 'auth/invalid-email') {
+      throw new Error('Invalid email address format.');
+    } else if (error.code === 'auth/network-request-failed') {
+      throw new Error('Network error. Please check your internet connection.');
+    } else {
+      throw new Error('Failed to send password reset email. Please try again.');
+    }
+  }
 }
 
 /**
