@@ -230,7 +230,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           )}
           <h1 className="text-3xl font-bold mb-2">{settings.appName}</h1>
           <p className="opacity-90 text-sm">
-            {isProviderSignup ? 'Become a Partner' : 'Experience the Soul of Dahab'}
+            {isProviderSignup ? 'Become a Partner' : 'Experience Dahab'}
           </p>
         </div>
 
