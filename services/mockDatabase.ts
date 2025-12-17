@@ -1,19 +1,22 @@
 import { Event, ServiceProvider, Booking, User, UserRole, BookingStatus, Review, Post, Comment, AppSettings } from '../types';
 
 // Increment this version to force a data reset on client browsers
-const DB_VERSION = '2.0'; 
+const DB_VERSION = '2.1';
 
 // Default settings if none exist in DB
 const INITIAL_SETTINGS: AppSettings = {
   appName: 'AmakenDahab',
   // Using a stable CDN image for the default logo (Palm tree/Beach icon)
-  logoUrl: 'https://cdn-icons-png.flaticon.com/512/1042/1042390.png', 
+  logoUrl: 'https://cdn-icons-png.flaticon.com/512/1042/1042390.png',
   heroImages: [
     "https://images.unsplash.com/photo-1544550581-5f7ceaf7f992?q=80&w=1920&auto=format&fit=crop",
     "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?q=80&w=1920&auto=format&fit=crop"
   ],
   backgroundStyle: 'linear-gradient(to bottom, #0f172a, #1e293b)',
-  contentOverrides: {}
+  contentOverrides: {
+    'home-hero-title-highlight': 'Dahab',
+    'home-cat-title': 'Explore Dahab'
+  }
 };
 
 // Seed Data for initial load

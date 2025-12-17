@@ -18,7 +18,7 @@ import {
   FacebookAuthProvider
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
-import { auth, db, googleProvider, facebookProvider } from './firebase';
+import { auth, db, googleProvider, facebookProvider, isFirebaseConfigured } from './firebase';
 import { User, UserRole } from '../types';
 
 // Mock Admin User for immediate testing (bypasses email verification)
@@ -31,7 +31,7 @@ const MOCK_ADMIN = {
     email: 'Rahma@organizer.com',
     role: UserRole.ADMIN,
     isEmailVerified: true,
-    provider: 'mock',
+    provider: 'email' as const,
     savedEventIds: []
   } as User
 };
@@ -93,13 +93,19 @@ async function createUserDocument(
     throw new Error('User email is required but not found.');
   }
 
+  const providerId = firebaseUser.providerData[0]?.providerId || 'password';
+  const provider: 'email' | 'google' | 'facebook' =
+    providerId === 'google.com' ? 'google' :
+    providerId === 'facebook.com' ? 'facebook' :
+    'email';
+
   const user: User = {
     id: firebaseUser.uid,
     name,
     email: firebaseUser.email,
     role,
     isEmailVerified: firebaseUser.emailVerified,
-    provider: firebaseUser.providerData[0]?.providerId || 'email',
+    provider,
     savedEventIds: []
   };
 
@@ -158,6 +164,17 @@ export async function registerWithEmail(
     throw new Error(validation.errors.join('. '));
   }
 
+  // Check if Firebase is configured
+  if (!isFirebaseConfigured) {
+    console.error('❌ Firebase not configured');
+    throw new Error('Firebase authentication is not configured. Please check your environment variables or contact support.');
+  }
+
+  if (!auth || !auth.app) {
+    console.error('❌ Firebase Auth not properly initialized');
+    throw new Error('Authentication service not available. Please refresh the page and try again.');
+  }
+
   try {
     console.log('📝 Creating Firebase Auth user...');
     // Create Firebase Auth user
@@ -186,6 +203,8 @@ export async function registerWithEmail(
     };
   } catch (error: any) {
     console.error('❌ Registration error:', error);
+    console.error('❌ Error code:', error.code);
+    console.error('❌ Error message:', error.message);
 
     // Handle Firebase Auth errors
     if (error.code === 'auth/email-already-in-use') {
@@ -196,6 +215,9 @@ export async function registerWithEmail(
       throw new Error('Password is too weak. Please use a stronger password.');
     } else if (error.code === 'auth/network-request-failed') {
       throw new Error('Network error. Please check your internet connection.');
+    } else if (error.code === 'auth/internal-error') {
+      console.error('❌ Firebase internal error during registration');
+      throw new Error('Registration service error. Please check your internet connection and try again. If the issue persists, contact support.');
     } else if (error.message?.includes('Firebase') || error.code?.startsWith('auth/')) {
       throw new Error(`Firebase error: ${error.message}`);
     } else if (error.message?.includes('Firestore') || error.code?.startsWith('firestore/')) {
@@ -236,8 +258,21 @@ export async function loginWithEmail(
     }
   }
 
+  // Check if Firebase is configured
+  if (!isFirebaseConfigured) {
+    console.error('❌ Firebase not configured');
+    throw new Error('Firebase authentication is not configured. Please check your environment variables or contact support.');
+  }
+
   try {
     console.log('🔐 Attempting Firebase authentication...');
+    console.log('🔍 Firebase Auth state:', auth ? 'initialized' : 'not initialized');
+
+    if (!auth || !auth.app) {
+      console.error('❌ Firebase Auth not properly initialized');
+      throw new Error('Authentication service not available. Please refresh the page and try again.');
+    }
+
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const firebaseUser = userCredential.user;
     console.log('✅ Firebase authentication successful:', firebaseUser.uid);
@@ -276,9 +311,17 @@ export async function loginWithEmail(
     return user;
   } catch (error: any) {
     console.error('❌ Login error:', error);
+    console.error('❌ Error code:', error.code);
+    console.error('❌ Error message:', error.message);
 
     if (error.message === 'EMAIL_NOT_VERIFIED') {
       throw new Error('Please verify your email before logging in. Check your inbox for the verification link.');
+    } else if (error.code === 'auth/internal-error') {
+      console.error('❌ Firebase internal error - this usually means:');
+      console.error('   1. Firebase Auth is not properly configured');
+      console.error('   2. Network/CORS issues');
+      console.error('   3. Invalid Firebase credentials');
+      throw new Error('Authentication service error. Please check:\n1. Your internet connection\n2. Firebase configuration\n3. Try refreshing the page\n\nIf the issue persists, contact support.');
     } else if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
       throw new Error('Invalid email or password.');
     } else if (error.code === 'auth/too-many-requests') {
@@ -287,6 +330,8 @@ export async function loginWithEmail(
       throw new Error('Network error. Please check your internet connection.');
     } else if (error.code === 'auth/invalid-email') {
       throw new Error('Invalid email address format.');
+    } else if (error.code === 'auth/configuration-not-found') {
+      throw new Error('Firebase configuration error. Please contact support.');
     } else {
       throw new Error(error.message || 'Login failed. Please try again.');
     }

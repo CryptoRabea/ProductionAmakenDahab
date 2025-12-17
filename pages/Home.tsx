@@ -83,7 +83,7 @@ const Home: React.FC = () => {
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 tracking-tight drop-shadow-lg flex flex-col md:block gap-2">
             <Editable id="home-hero-title-1" defaultContent="Experience the Soul of" className="inline-block mr-2" />
             <span className="text-dahab-gold">
-               <Editable id="home-hero-title-highlight" defaultContent={settings.appName.split(' ')[0]} />
+               <Editable id="home-hero-title-highlight" defaultContent="Dahab" />
             </span>
           </h1>
           <div className="text-gray-100 text-lg md:text-xl max-w-2xl mb-8 drop-shadow-md font-medium">
@@ -117,7 +117,7 @@ const Home: React.FC = () => {
       <section>
         <div className="flex justify-between items-end mb-6">
           <h2 className="text-2xl font-bold">
-            <Editable id="home-cat-title" defaultContent={`Explore ${settings.appName.split(' ')[0]}`} />
+            <Editable id="home-cat-title" defaultContent="Explore Dahab" />
           </h2>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

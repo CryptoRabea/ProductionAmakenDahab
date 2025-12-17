@@ -39,15 +39,21 @@ const INITIAL_SETTINGS: AppSettings = {
     "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?q=80&w=1920&auto=format&fit=crop"
   ],
   backgroundStyle: 'linear-gradient(to bottom, #0f172a, #1e293b)',
-  contentOverrides: {}
+  contentOverrides: {
+    'home-hero-title-highlight': 'Dahab',
+    'home-cat-title': 'Explore Dahab'
+  }
 };
 
 // Helper to convert Firestore timestamp to string
 const timestampToString = (timestamp: unknown): string => {
-  if (timestamp?.toDate) {
+  if (timestamp && typeof timestamp === 'object' && 'toDate' in timestamp && typeof timestamp.toDate === 'function') {
     return timestamp.toDate().toISOString();
   }
-  return timestamp || new Date().toISOString();
+  if (typeof timestamp === 'string') {
+    return timestamp;
+  }
+  return new Date().toISOString();
 };
 
 class FirestoreDatabase {
