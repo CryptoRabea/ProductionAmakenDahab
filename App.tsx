@@ -134,7 +134,7 @@ const AppContent: React.FC = () => {
   return (
     <HashRouter>
       <div
-        className={`min-h-screen pb-20 pt-20 pt-safe ${textColorClass} transition-all duration-500 ease-in-out`}
+        className={`min-h-screen pb-20 pt-30 pt-safe ${textColorClass} transition-all duration-500 ease-in-out`}
         style={{
           backgroundImage: settings.backgroundStyle,
           backgroundAttachment: 'fixed',
