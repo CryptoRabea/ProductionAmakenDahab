@@ -1,9 +1,9 @@
 # Settings for Backend (on Cloud Run).
 # See https://firebase.google.com/docs/app-hosting/configure#cloud-run
 runConfig:
-  minInstances: 0
+  minInstances: 2
   # maxInstances: 100
-  # concurrency: 80
+  # concurrency: 100
   # cpu: 1
   # memoryMiB: 512
 
@@ -11,7 +11,7 @@ runConfig:
 # env:
   # Configure environment variables.
   # See https://firebase.google.com/docs/app-hosting/configure#user-defined-environment
-  # - variable: MESSAGE
+  # - variable: amakendahab.firebasestorage.app
   #   value: Hello world!
   #   availability:
   #     - BUILD
