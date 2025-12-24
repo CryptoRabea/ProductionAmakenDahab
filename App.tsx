@@ -134,7 +134,7 @@ const AppContent: React.FC = () => {
   return (
     <HashRouter>
       <div
-        className={`min-h-screen pb-20 pt-30 pt-safe ${textColorClass} transition-all duration-500 ease-in-out`}
+        className={`min-h-screen pb-20 pt-20 md:pt-24 pt-safe ${textColorClass} transition-all duration-500 ease-in-out`}
         style={{
           backgroundImage: settings.backgroundStyle,
           backgroundAttachment: 'fixed',
@@ -199,7 +199,7 @@ const AppContent: React.FC = () => {
         {user?.role === UserRole.ADMIN && (
           <button
             onClick={toggleEditing}
-            className={`fixed bottom-28 right-4 md:right-10 p-4 rounded-full shadow-xl z-50 transition-all transform hover:scale-105 ${isEditing ? 'bg-orange-500 text-white' : 'bg-gray-900 text-white'}`}
+            className={`fixed bottom-28 left-4 md:left-10 p-4 rounded-full shadow-xl z-50 transition-all transform hover:scale-105 ${isEditing ? 'bg-orange-500 text-white' : 'bg-gray-900 text-white'}`}
             title={isEditing ? "Exit Edit Mode" : "Enter Edit Mode"}
             aria-label={isEditing ? "Exit Edit Mode" : "Enter Edit Mode"}
           >
