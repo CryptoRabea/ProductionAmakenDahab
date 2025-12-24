@@ -10,8 +10,9 @@ import {
   resendVerificationEmail,
   sendPasswordReset
 } from '../services/auth';
-import { Mail, Lock, User as UserIcon, ArrowRight, Check, Facebook, Loader2, Briefcase, AlertCircle, CheckCircle, ShieldCheck } from 'lucide-react';
+import { Mail, Lock, User as UserIcon, ArrowRight, Check, Facebook, Loader2, Briefcase, AlertCircle, CheckCircle, ShieldCheck, FileText } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
+import ProviderAgreementModal from '../components/ProviderAgreementModal';
 
 interface LoginProps {
   onLogin: (user: User) => void;
@@ -39,6 +40,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [needsVerification, setNeedsVerification] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [resetSuccess, setResetSuccess] = useState(false);
+  const [hasAgreedToTerms, setHasAgreedToTerms] = useState(false);
+  const [showAgreementModal, setShowAgreementModal] = useState(false);
 
   useEffect(() => {
     const roleParam = searchParams.get('role');
@@ -209,6 +212,23 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       setPasswordErrors([]);
     }
   };
+
+  // Handle agreement acceptance
+  const handleAgreeToTerms = () => {
+    setHasAgreedToTerms(true);
+    setShowAgreementModal(false);
+  };
+
+  // Reset agreement when switching provider mode
+  useEffect(() => {
+    if (!isProviderSignup) {
+      setHasAgreedToTerms(false);
+    }
+  }, [isProviderSignup]);
+
+  // Check if provider signup form is ready
+  const isProviderFormReady = !isProviderSignup || hasAgreedToTerms;
+  const isSubmitDisabled = loading || (mode === 'signup' && isProviderSignup && !hasAgreedToTerms);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[80vh] px-4">
@@ -437,8 +457,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 ${isProviderSignup ? 'bg-dahab-teal border-dahab-teal' : 'border-gray-300'}`}>
                   {isProviderSignup && <Check size={14} className="text-white" />}
                 </div>
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   checked={isProviderSignup}
                   onChange={e => setIsProviderSignup(e.target.checked)}
                   className="hidden"
@@ -451,6 +471,55 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                    <p className="text-xs text-gray-500 mt-1">Create events, offer driving services, or list your business. Requires admin approval.</p>
                 </div>
               </label>
+            )}
+
+            {/* Provider Terms Agreement Checkbox */}
+            {mode === 'signup' && isProviderSignup && (
+              <div className="animate-fade-in">
+                <div
+                  onClick={() => !hasAgreedToTerms && setShowAgreementModal(true)}
+                  className={`flex items-start gap-3 p-4 border rounded-xl transition ${
+                    hasAgreedToTerms
+                      ? 'bg-green-50 border-green-300 cursor-default'
+                      : 'border-amber-300 bg-amber-50 cursor-pointer hover:bg-amber-100'
+                  }`}
+                >
+                  <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 ${
+                    hasAgreedToTerms
+                      ? 'bg-green-500 border-green-500'
+                      : 'border-amber-400 bg-white'
+                  }`}>
+                    {hasAgreedToTerms && <Check size={14} className="text-white" />}
+                  </div>
+                  <div className="flex-1">
+                    <div className={`font-bold flex items-center gap-2 ${
+                      hasAgreedToTerms ? 'text-green-700' : 'text-amber-800'
+                    }`}>
+                      <FileText size={16} className={hasAgreedToTerms ? 'text-green-600' : 'text-amber-600'} />
+                      {hasAgreedToTerms
+                        ? 'Terms & Conditions Accepted'
+                        : 'Accept Terms & Conditions (Required)'}
+                    </div>
+                    <p className={`text-xs mt-1 ${hasAgreedToTerms ? 'text-green-600' : 'text-amber-700'}`}>
+                      {hasAgreedToTerms
+                        ? 'You have agreed to the Client Terms & Conditions. شروط وأحكام المستخدمين'
+                        : 'Click to read and accept the terms before signing up. اضغط لقراءة وقبول الشروط'}
+                    </p>
+                    {!hasAgreedToTerms && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowAgreementModal(true);
+                        }}
+                        className="mt-2 text-xs font-medium text-dahab-teal hover:text-dahab-teal/80 underline"
+                      >
+                        View Terms & Conditions (English / العربية)
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
             )}
 
             {/* Success Message - Email Verification Sent */}
@@ -488,11 +557,20 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
             <button
               type="submit"
-              disabled={loading}
-              className="w-full bg-gray-900 text-white py-3 rounded-xl font-bold hover:bg-gray-800 transition flex justify-center items-center gap-2"
+              disabled={isSubmitDisabled}
+              className={`w-full py-3 rounded-xl font-bold transition flex justify-center items-center gap-2 ${
+                isSubmitDisabled
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'bg-gray-900 text-white hover:bg-gray-800'
+              }`}
             >
               {loading ? (
                 <Loader2 className="animate-spin" size={20} />
+              ) : mode === 'signup' && isProviderSignup && !hasAgreedToTerms ? (
+                <>
+                  <AlertCircle size={18} />
+                  Accept Terms to Continue
+                </>
               ) : (
                 <>
                   {mode === 'login' ? 'Sign In' : 'Create Account'}
@@ -519,6 +597,13 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           )}
         </div>
       </div>
+
+      {/* Provider Agreement Modal */}
+      <ProviderAgreementModal
+        isOpen={showAgreementModal}
+        onClose={() => setShowAgreementModal(false)}
+        onAgree={handleAgreeToTerms}
+      />
     </div>
   );
 };
