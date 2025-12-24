@@ -148,8 +148,13 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     } catch (err: any) {
       console.error("❌ Auth Error:", err);
 
+      // Check if user doesn't exist - redirect to signup
+      if (err.message === 'USER_NOT_FOUND') {
+        setMode('signup');
+        setError('No account found with this email. Please sign up to create an account.');
+        setFormData({ ...formData, name: '' }); // Keep email, clear name for signup
       // Check if it's an email verification error
-      if (err.message?.includes('verify your email')) {
+      } else if (err.message?.includes('verify your email')) {
         setNeedsVerification(true);
         setError(err.message);
       } else if (err.message?.includes('Firebase') && err.message?.includes('not initialized')) {
