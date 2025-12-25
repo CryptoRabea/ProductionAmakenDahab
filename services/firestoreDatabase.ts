@@ -27,7 +27,7 @@ import {
   getDownloadURL
 } from 'firebase/storage';
 import { db, auth, storage, googleProvider, facebookProvider, isFirebaseConfigured } from './firebase';
-import { Event, ServiceProvider, Booking, User, UserRole, BookingStatus, Review, Post, Comment, AppSettings } from '../types';
+import { Event, ServiceProvider, Booking, User, UserRole, BookingStatus, Review, Post, Comment, AppSettings, TransactionRecord } from '../types';
 import { nanoid } from 'nanoid';
 
 // Default settings if none exist in DB
@@ -431,10 +431,27 @@ class FirestoreDatabase {
     if (!this.useFirestore) return;
 
     const bookingId = booking.id || nanoid();
+    const timestamp = new Date().toISOString();
+
     await setDoc(doc(db, 'bookings', bookingId), {
       ...booking,
       id: bookingId,
       timestamp: Timestamp.now()
+    });
+
+    // Create transaction record for history tracking
+    await this.createTransactionRecord({
+      type: 'booking_request',
+      bookingId: bookingId,
+      userId: booking.userId,
+      userName: booking.userName,
+      itemId: booking.itemId,
+      itemType: booking.itemType,
+      amount: booking.amount,
+      paymentMethod: booking.method,
+      status: booking.status,
+      receiptImageUrl: booking.receiptImage,
+      timestamp: timestamp
     });
   }
 
@@ -587,6 +604,116 @@ class FirestoreDatabase {
       console.error('Error uploading image:', error);
       throw error;
     }
+  }
+
+  // --- TRANSACTION HISTORY ---
+  async createTransactionRecord(record: Omit<TransactionRecord, 'id' | 'month' | 'year'>): Promise<void> {
+    if (!this.useFirestore) return;
+
+    const recordId = nanoid();
+    const date = new Date(record.timestamp);
+
+    const fullRecord: TransactionRecord = {
+      ...record,
+      id: recordId,
+      month: date.getMonth() + 1, // 1-12
+      year: date.getFullYear()
+    };
+
+    await setDoc(doc(db, 'transactionHistory', recordId), fullRecord);
+  }
+
+  async getTransactionsByMonth(month: number, year: number): Promise<TransactionRecord[]> {
+    if (!this.useFirestore) return [];
+
+    try {
+      const q = query(
+        collection(db, 'transactionHistory'),
+        where('month', '==', month),
+        where('year', '==', year),
+        orderBy('timestamp', 'desc')
+      );
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => doc.data() as TransactionRecord);
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+      return [];
+    }
+  }
+
+  async getAllTransactions(): Promise<TransactionRecord[]> {
+    if (!this.useFirestore) return [];
+
+    try {
+      const q = query(collection(db, 'transactionHistory'), orderBy('timestamp', 'desc'));
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => doc.data() as TransactionRecord);
+    } catch (error) {
+      console.error('Error fetching all transactions:', error);
+      return [];
+    }
+  }
+
+  exportTransactionsToXML(transactions: TransactionRecord[]): string {
+    const escapeXml = (str: string | undefined): string => {
+      if (!str) return '';
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+    };
+
+    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+    xml += '<TransactionHistory>\n';
+    xml += `  <ExportDate>${new Date().toISOString()}</ExportDate>\n`;
+    xml += `  <TotalRecords>${transactions.length}</TotalRecords>\n`;
+    xml += '  <Transactions>\n';
+
+    for (const tx of transactions) {
+      xml += '    <Transaction>\n';
+      xml += `      <ID>${escapeXml(tx.id)}</ID>\n`;
+      xml += `      <Type>${escapeXml(tx.type)}</Type>\n`;
+      xml += `      <BookingID>${escapeXml(tx.bookingId)}</BookingID>\n`;
+      xml += `      <User>\n`;
+      xml += `        <UserID>${escapeXml(tx.userId)}</UserID>\n`;
+      xml += `        <UserName>${escapeXml(tx.userName)}</UserName>\n`;
+      xml += `        <UserEmail>${escapeXml(tx.userEmail)}</UserEmail>\n`;
+      xml += `      </User>\n`;
+      xml += `      <Item>\n`;
+      xml += `        <ItemID>${escapeXml(tx.itemId)}</ItemID>\n`;
+      xml += `        <ItemName>${escapeXml(tx.itemName)}</ItemName>\n`;
+      xml += `        <ItemType>${escapeXml(tx.itemType)}</ItemType>\n`;
+      xml += `      </Item>\n`;
+      xml += `      <Payment>\n`;
+      xml += `        <Amount>${tx.amount}</Amount>\n`;
+      xml += `        <Method>${escapeXml(tx.paymentMethod)}</Method>\n`;
+      xml += `        <Status>${escapeXml(tx.status)}</Status>\n`;
+      xml += `        <ReceiptURL>${escapeXml(tx.receiptImageUrl)}</ReceiptURL>\n`;
+      xml += `      </Payment>\n`;
+      xml += `      <Timestamp>${escapeXml(tx.timestamp)}</Timestamp>\n`;
+      xml += `      <Month>${tx.month}</Month>\n`;
+      xml += `      <Year>${tx.year}</Year>\n`;
+      xml += '    </Transaction>\n';
+    }
+
+    xml += '  </Transactions>\n';
+    xml += '</TransactionHistory>';
+
+    return xml;
+  }
+
+  downloadXML(xml: string, filename: string): void {
+    const blob = new Blob([xml], { type: 'application/xml' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   }
 }
 

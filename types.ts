@@ -109,3 +109,22 @@ export interface Booking {
   timestamp: string;
   receiptImage?: string; // Base64 placeholder
 }
+
+export interface TransactionRecord {
+  id: string;
+  type: 'booking_request' | 'payment_receipt' | 'provider_subscription';
+  bookingId?: string;
+  userId: string;
+  userName: string;
+  userEmail?: string;
+  itemId?: string;
+  itemName?: string;
+  itemType?: 'event' | 'service';
+  amount: number;
+  paymentMethod: PaymentMethod | string;
+  status: BookingStatus | string;
+  receiptImageUrl?: string;
+  timestamp: string;
+  month: number; // 1-12
+  year: number;
+}

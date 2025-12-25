@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { db } from '../services/database';
-import { Booking, BookingStatus, Event, User, UserRole } from '../types';
-import { Check, X, Plus, Image as ImageIcon, Trash2, Upload, Palette, Settings, UserCheck, ShieldAlert, Edit2, Calendar, Clock, AlertCircle, Star, LogOut, DollarSign, ExternalLink } from 'lucide-react';
+import { Booking, BookingStatus, Event, User, UserRole, TransactionRecord } from '../types';
+import { Check, X, Plus, Image as ImageIcon, Trash2, Upload, Palette, Settings, UserCheck, ShieldAlert, Edit2, Calendar, Clock, AlertCircle, Star, LogOut, DollarSign, ExternalLink, FileDown, History, Loader2 } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
 import EventFormModal from '../components/EventFormModal';
 
@@ -21,11 +21,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [pendingProviders, setPendingProviders] = useState<User[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
-  const [activeTab, setActiveTab] = useState<'bookings' | 'events' | 'pending-events' | 'verifications' | 'settings'>('bookings');
-  
+  const [activeTab, setActiveTab] = useState<'bookings' | 'events' | 'pending-events' | 'verifications' | 'settings' | 'history'>('bookings');
+
   // Event Management State
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+
+  // Transaction History State
+  const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [isExporting, setIsExporting] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
   // Settings Hook
   const { settings, updateSettings } = useSettings();
@@ -133,6 +140,57 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
     alert("Settings saved successfully!");
   };
 
+  // --- Transaction History ---
+  const loadTransactionHistory = async () => {
+    setIsLoadingHistory(true);
+    try {
+      const txs = await db.getTransactionsByMonth(selectedMonth, selectedYear);
+      setTransactions(txs);
+    } catch (error) {
+      console.error('Error loading transaction history:', error);
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
+
+  const handleExportXML = async () => {
+    setIsExporting(true);
+    try {
+      const txs = await db.getTransactionsByMonth(selectedMonth, selectedYear);
+      const xml = db.exportTransactionsToXML(txs);
+      const monthName = new Date(selectedYear, selectedMonth - 1).toLocaleString('default', { month: 'long' });
+      const filename = `transactions_${monthName}_${selectedYear}.xml`;
+      db.downloadXML(xml, filename);
+    } catch (error) {
+      console.error('Error exporting transactions:', error);
+      alert('Failed to export transactions. Please try again.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportAllXML = async () => {
+    setIsExporting(true);
+    try {
+      const txs = await db.getAllTransactions();
+      const xml = db.exportTransactionsToXML(txs);
+      const filename = `all_transactions_${new Date().toISOString().split('T')[0]}.xml`;
+      db.downloadXML(xml, filename);
+    } catch (error) {
+      console.error('Error exporting all transactions:', error);
+      alert('Failed to export transactions. Please try again.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // Load history when tab changes or filters change
+  useEffect(() => {
+    if (activeTab === 'history') {
+      loadTransactionHistory();
+    }
+  }, [activeTab, selectedMonth, selectedYear]);
+
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -183,11 +241,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
           >
             All Events
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab('settings')}
             className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap flex items-center gap-2 ${activeTab === 'settings' ? 'bg-dahab-teal text-white' : 'bg-white text-gray-700'}`}
           >
             <Settings size={18} /> Settings
+          </button>
+          <button
+            onClick={() => setActiveTab('history')}
+            className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap flex items-center gap-2 ${activeTab === 'history' ? 'bg-dahab-teal text-white' : 'bg-white text-gray-700'}`}
+          >
+            <History size={18} /> History
           </button>
         </div>
       </div>
@@ -519,12 +583,154 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
           </div>
 
           <div className="flex justify-end pt-4">
-            <button 
+            <button
               onClick={handleSaveSettings}
               className="bg-dahab-teal text-white px-8 py-3 rounded-xl font-bold hover:bg-teal-700 shadow-lg transition transform hover:scale-105"
             >
               Save Changes
             </button>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'history' && (
+        <div className="space-y-6">
+          {/* Export Controls */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-gray-900">
+              <FileDown size={20} className="text-dahab-teal" /> Export Transaction History
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Export all booking requests and payment receipts as XML for record-keeping and accounting purposes.
+            </p>
+
+            <div className="flex flex-col md:flex-row gap-4 items-end">
+              <div className="flex-1">
+                <label className="block text-sm font-bold text-gray-700 mb-1">Month</label>
+                <select
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                  className="w-full border border-gray-300 rounded-xl px-4 py-2 bg-white text-gray-900"
+                >
+                  {[
+                    'January', 'February', 'March', 'April', 'May', 'June',
+                    'July', 'August', 'September', 'October', 'November', 'December'
+                  ].map((month, idx) => (
+                    <option key={idx + 1} value={idx + 1}>{month}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex-1">
+                <label className="block text-sm font-bold text-gray-700 mb-1">Year</label>
+                <select
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(Number(e.target.value))}
+                  className="w-full border border-gray-300 rounded-xl px-4 py-2 bg-white text-gray-900"
+                >
+                  {[2024, 2025, 2026, 2027].map((year) => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </select>
+              </div>
+              <button
+                onClick={handleExportXML}
+                disabled={isExporting}
+                className="bg-dahab-teal text-white px-6 py-2 rounded-xl font-bold hover:bg-teal-700 flex items-center gap-2 disabled:opacity-50"
+              >
+                {isExporting ? <Loader2 className="animate-spin" size={18} /> : <FileDown size={18} />}
+                Export Monthly XML
+              </button>
+              <button
+                onClick={handleExportAllXML}
+                disabled={isExporting}
+                className="bg-gray-800 text-white px-6 py-2 rounded-xl font-bold hover:bg-gray-700 flex items-center gap-2 disabled:opacity-50"
+              >
+                {isExporting ? <Loader2 className="animate-spin" size={18} /> : <FileDown size={18} />}
+                Export All
+              </button>
+            </div>
+          </div>
+
+          {/* Transaction List */}
+          <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <History className="text-dahab-teal" />
+                <h3 className="font-bold text-gray-900">
+                  Transactions - {new Date(selectedYear, selectedMonth - 1).toLocaleString('default', { month: 'long' })} {selectedYear}
+                </h3>
+              </div>
+              <span className="text-sm text-gray-500">{transactions.length} records</span>
+            </div>
+
+            {isLoadingHistory ? (
+              <div className="p-8 text-center">
+                <Loader2 className="animate-spin mx-auto text-dahab-teal" size={32} />
+                <p className="text-gray-500 mt-2">Loading transactions...</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead className="bg-gray-50 text-gray-500 text-sm uppercase">
+                    <tr>
+                      <th className="p-4">Date</th>
+                      <th className="p-4">Type</th>
+                      <th className="p-4">User</th>
+                      <th className="p-4">Item</th>
+                      <th className="p-4">Amount</th>
+                      <th className="p-4">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {transactions.length === 0 && (
+                      <tr><td colSpan={6} className="p-8 text-center text-gray-400">No transactions found for this period</td></tr>
+                    )}
+                    {transactions.map((tx) => (
+                      <tr key={tx.id} className="hover:bg-gray-50 text-gray-900">
+                        <td className="p-4 text-sm">
+                          {new Date(tx.timestamp).toLocaleDateString()}
+                          <br />
+                          <span className="text-xs text-gray-400">
+                            {new Date(tx.timestamp).toLocaleTimeString()}
+                          </span>
+                        </td>
+                        <td className="p-4">
+                          <span className={`px-2 py-1 rounded text-xs font-bold ${
+                            tx.type === 'booking_request' ? 'bg-purple-100 text-purple-700' :
+                            tx.type === 'payment_receipt' ? 'bg-green-100 text-green-700' :
+                            'bg-blue-100 text-blue-700'
+                          }`}>
+                            {tx.type.replace(/_/g, ' ').toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="p-4">
+                          <span className="font-medium">{tx.userName}</span>
+                          {tx.userEmail && <br />}
+                          {tx.userEmail && <span className="text-xs text-gray-400">{tx.userEmail}</span>}
+                        </td>
+                        <td className="p-4 text-sm">
+                          {tx.itemName || tx.itemId || '-'}
+                          {tx.itemType && (
+                            <span className="ml-2 text-xs text-gray-400">({tx.itemType})</span>
+                          )}
+                        </td>
+                        <td className="p-4 font-bold">{tx.amount} EGP</td>
+                        <td className="p-4">
+                          <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                            tx.status === 'confirmed' ? 'bg-green-100 text-green-700' :
+                            tx.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                            tx.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                            'bg-gray-100 text-gray-700'
+                          }`}>
+                            {tx.status.toUpperCase()}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       )}
